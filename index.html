@@ -391,6 +391,30 @@
       :root { --match-font-size: 9px; }
     }
 
+    /* ── Argentina / Messi highlight ── */
+    @keyframes argPulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(116,172,223,0.3), inset 0 0 6px rgba(116,172,223,0.06); }
+      50%       { box-shadow: 0 0 22px rgba(116,172,223,0.65), inset 0 0 14px rgba(116,172,223,0.14); }
+    }
+    .argentina-day {
+      border-color: #74ACDF !important;
+      background: rgba(116,172,223,0.08) !important;
+      animation: argPulse 2.4s ease-in-out infinite;
+    }
+    .argentina-day .day-number > span:first-child { color: #a8d4f5; }
+    .arg-flag-indicator { font-size: 0.8em; filter: drop-shadow(0 0 4px rgba(116,172,223,0.9)); }
+    .match-item.argentina-match {
+      border-left-color: #74ACDF !important;
+      background: rgba(116,172,223,0.08) !important;
+    }
+    .detail-match-item.argentina-match {
+      border-left-color: #74ACDF !important;
+      background: rgba(116,172,223,0.07) !important;
+    }
+
+    /* Mobile day panel — hidden on desktop */
+    .mobile-day-panel { display: none; }
+
     /* ── Mobile ── */
     @media (max-width: 640px) {
       /* Header: stack brand + controls */
@@ -411,7 +435,10 @@
         -webkit-overflow-scrolling: touch;
       }
       .control-group { flex-shrink: 0; padding: 4px 8px; }
-      .control-label { display: none; } /* save space — dropdowns are self-explanatory */
+      .control-label { display: none; }
+
+      /* Hide font size selector on mobile */
+      #fontsize-control-group { display: none; }
 
       /* Container */
       .app-container { padding: 8px 8px 20px; }
@@ -436,25 +463,72 @@
         font-size: 0.52rem;
       }
 
-      /* Hide per-cell match list — use modal instead */
+      /* Hide per-cell match list — use panel instead */
       .match-list { display: none; }
 
-      /* Make all match-day cells obviously tappable */
+      /* Default: match-day cells have subtle glow */
       .day-cell.has-matches {
         border-color: rgba(0, 255, 102, 0.35);
         background: rgba(0, 255, 102, 0.06);
       }
 
-      /* Detail modal: full-screen on mobile */
-      .detail-card {
-        max-width: 100%;
-        width: 96%;
-        max-height: 88vh;
-        padding: 18px 14px;
-        border-radius: 12px;
+      /* Group filter highlights */
+      .day-cell.group-active {
+        border-color: var(--theme-glow) !important;
+        background: rgba(0,255,102,0.15) !important;
+        box-shadow: 0 0 10px rgba(0,255,102,0.3) !important;
       }
-      .detail-date { font-size: 1.3rem; }
-      .detail-match-teams { font-size: 0.95rem; }
+      .day-cell.group-inactive {
+        opacity: 0.25 !important;
+        box-shadow: none !important;
+      }
+
+      /* Currently selected day */
+      .day-cell.day-selected {
+        border-color: #fff !important;
+        box-shadow: 0 0 12px rgba(255,255,255,0.25) !important;
+      }
+
+      /* Mobile day panel */
+      .mobile-day-panel.active {
+        display: block;
+        margin-top: 14px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 16px 14px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .mobile-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 14px;
+      }
+      .mobile-panel-date {
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        color: #fff;
+        line-height: 1;
+      }
+      .mobile-panel-weekday {
+        color: var(--theme-glow);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-top: 5px;
+      }
+      .mobile-panel-close {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: var(--text-muted);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 4px 10px;
+        border-radius: 6px;
+      }
     }
   </style>
 </head>
@@ -488,7 +562,7 @@
           <option value="gold">烈焰金</option>
         </select>
       </div>
-      <div class="control-group">
+      <div class="control-group" id="fontsize-control-group">
         <span class="control-label">文字大小</span>
         <select id="fontSizeSelector" onchange="changeFontSize(this.value)">
           <option value="8px">極小</option>
@@ -515,6 +589,17 @@
         <div class="calendar-grid" id="calendarGrid"></div>
         <div class="wallpaper-watermark">FIFA World Cup 2026 — June Schedule Calendar</div>
       </div>
+    </div>
+    <!-- Mobile Day Panel -->
+    <div id="mobileDayPanel" class="mobile-day-panel">
+      <div class="mobile-panel-header">
+        <div>
+          <div class="mobile-panel-date" id="mobilePanelDate"></div>
+          <div class="mobile-panel-weekday" id="mobilePanelWeekday"></div>
+        </div>
+        <button class="mobile-panel-close" onclick="closeMobilePanel()">✕ 關閉</button>
+      </div>
+      <div class="detail-match-list" id="mobilePanelMatches"></div>
     </div>
   </div>
 
@@ -654,12 +739,14 @@
         const isWE = col === 0 || col === 6;
         const isToday = d === currentDayNum;
         const matches = matchesData.filter(m => m.date === d);
+        const hasArgentina = matches.some(m => m.team1 === '阿根廷' || m.team2 === '阿根廷');
 
         const cell = document.createElement('div');
         let cls = 'day-cell';
         if (isWE) cls += ' weekend';
         if (isToday) cls += ' today';
         if (matches.length > 0) cls += ' has-matches';
+        if (hasArgentina) cls += ' argentina-day';
         cell.className = cls;
         cell.id = `day-${d}`;
 
@@ -672,10 +759,11 @@
           const f1 = flags[m.team1] || '';
           const f2 = flags[m.team2] || '';
           const t = m.time.replace(/^(凌晨|上午|中午|下午) /,'');
-          matchHtml += `<div class="match-item" data-group="${m.group}" style="border-left-color:${gc}">
+          const isArgMatch = m.team1 === '阿根廷' || m.team2 === '阿根廷';
+          matchHtml += `<div class="match-item${isArgMatch ? ' argentina-match' : ''}" data-group="${m.group}" style="border-left-color:${gc}">
             <div class="match-time-group">
               <span>${t}</span>
-              <span class="match-group-badge" style="background:${gc}22;color:${gc}">${m.group}</span>
+              <span class="match-group-badge" style="background:${gc}22;color:${gc}">${m.group}${isArgMatch ? ' ⭐' : ''}</span>
             </div>
             <div class="match-teams" title="${m.team1} vs ${m.team2}">
               ${f1}${m.team1}<span class="vs">v</span>${f2}${m.team2}
@@ -684,7 +772,8 @@
         });
         matchHtml += '</div>';
 
-        cell.innerHTML = `<div class="day-number"><span>${d}</span>${badge}</div>${matchHtml}`;
+        const argFlag = hasArgentina ? ' <span class="arg-flag-indicator">🇦🇷</span>' : '';
+        cell.innerHTML = `<div class="day-number"><span>${d}${argFlag}</span>${badge}</div>${matchHtml}`;
 
         if (matches.length > 0) {
           cell.addEventListener('click', () => openDayDetail(d));
@@ -720,6 +809,18 @@
           item.classList.remove('highlighted');
         }
       });
+      // Mobile: highlight day cells by selected group
+      const isMobile = window.innerWidth <= 640;
+      document.querySelectorAll('.day-cell:not(.other-month)').forEach(cell => {
+        cell.classList.remove('group-active', 'group-inactive');
+        if (isMobile && g !== 'ALL' && cell.classList.contains('has-matches')) {
+          const hasGroup = !!cell.querySelector(`.match-item[data-group="${g}"]`);
+          cell.classList.toggle('group-active', hasGroup);
+          cell.classList.toggle('group-inactive', !hasGroup);
+        }
+      });
+      // Close panel when filter changes to avoid stale data
+      if (isMobile) closeMobilePanel();
       updateMatchStats(g);
     }
 
@@ -738,23 +839,19 @@
       document.documentElement.style.setProperty('--match-font-size', s);
     }
 
-    /* ── Detail modal ── */
-    function openDayDetail(day) {
-      const matches = matchesData.filter(m => m.date === day);
-      if (!matches.length) return;
-      document.getElementById('detailDateText').textContent = `6月${day}日`;
-      document.getElementById('detailWeekdayText').textContent = weekdaysCN[day % 7];
-      const container = document.getElementById('detailMatchList');
+    /* ── Shared: build match item DOM into container ── */
+    function buildMatchItems(matches, container) {
       container.innerHTML = '';
       matches.forEach(m => {
-        const gc = groupColors[m.group] || 'var(--theme-glow)';
+        const isArg = m.team1 === '阿根廷' || m.team2 === '阿根廷';
+        const gc = isArg ? '#74ACDF' : (groupColors[m.group] || 'var(--theme-glow)');
         const f1 = flags[m.team1] || '', f2 = flags[m.team2] || '';
         const div = document.createElement('div');
-        div.className = 'detail-match-item';
+        div.className = `detail-match-item${isArg ? ' argentina-match' : ''}`;
         div.style.borderLeftColor = gc;
         div.innerHTML = `
           <div class="detail-match-meta">
-            <span style="color:${gc};font-weight:bold">${m.group}組對戰</span>
+            <span style="color:${gc};font-weight:bold">${m.group}組對戰${isArg ? ' ⭐' : ''}</span>
             <span>${m.time}</span>
           </div>
           <div class="detail-match-teams">
@@ -764,10 +861,51 @@
           </div>`;
         container.appendChild(div);
       });
-      document.getElementById('detailOverlay').style.display = 'flex';
     }
+
+    /* ── Detail modal (desktop) / panel (mobile) ── */
+    let selectedDay = null;
+
+    function openDayDetail(day) {
+      const matches = matchesData.filter(m => m.date === day);
+      if (!matches.length) return;
+
+      if (window.innerWidth <= 640) {
+        // Mobile: show panel below calendar
+        // Clear previous selected highlight
+        if (selectedDay) {
+          const prev = document.getElementById(`day-${selectedDay}`);
+          if (prev) prev.classList.remove('day-selected');
+        }
+        selectedDay = day;
+        document.getElementById(`day-${day}`).classList.add('day-selected');
+
+        document.getElementById('mobilePanelDate').textContent = `6月${day}日`;
+        document.getElementById('mobilePanelWeekday').textContent = weekdaysCN[day % 7];
+        buildMatchItems(matches, document.getElementById('mobilePanelMatches'));
+        const panel = document.getElementById('mobileDayPanel');
+        panel.classList.add('active');
+        setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+      } else {
+        // Desktop: modal overlay
+        document.getElementById('detailDateText').textContent = `6月${day}日`;
+        document.getElementById('detailWeekdayText').textContent = weekdaysCN[day % 7];
+        buildMatchItems(matches, document.getElementById('detailMatchList'));
+        document.getElementById('detailOverlay').style.display = 'flex';
+      }
+    }
+
     function closeDetail() {
       document.getElementById('detailOverlay').style.display = 'none';
+    }
+
+    function closeMobilePanel() {
+      document.getElementById('mobileDayPanel').classList.remove('active');
+      if (selectedDay) {
+        const cell = document.getElementById(`day-${selectedDay}`);
+        if (cell) cell.classList.remove('day-selected');
+        selectedDay = null;
+      }
     }
 
     window.onload = initCalendar;
