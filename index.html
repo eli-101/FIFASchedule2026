@@ -390,6 +390,72 @@
       .day-cell { padding: 5px 5px 4px; }
       :root { --match-font-size: 9px; }
     }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      /* Header: stack brand + controls */
+      header {
+        padding: 8px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .brand-title { font-size: 0.95rem; letter-spacing: 1px; }
+
+      /* Controls: single horizontal scroll row */
+      .controls {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .control-group { flex-shrink: 0; padding: 4px 8px; }
+      .control-label { display: none; } /* save space — dropdowns are self-explanatory */
+
+      /* Container */
+      .app-container { padding: 8px 8px 20px; }
+      .calendar-inner { padding: 10px 8px 12px; }
+      .calendar-header-bar { flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 10px; }
+      .calendar-stats { font-size: 0.72rem; }
+
+      /* Grid: keep 7 cols but minimal cells */
+      .calendar-grid { gap: 2px; }
+      .weekday { font-size: 0.55rem; padding: 4px 0; letter-spacing: 0; }
+      .day-cell {
+        min-height: 38px;
+        padding: 4px 3px 3px;
+        border-radius: 5px;
+      }
+      .day-number {
+        font-size: 0.7rem;
+        margin-bottom: 2px;
+      }
+      .match-count-badge {
+        min-width: 13px; height: 13px;
+        font-size: 0.52rem;
+      }
+
+      /* Hide per-cell match list — use modal instead */
+      .match-list { display: none; }
+
+      /* Make all match-day cells obviously tappable */
+      .day-cell.has-matches {
+        border-color: rgba(0, 255, 102, 0.35);
+        background: rgba(0, 255, 102, 0.06);
+      }
+
+      /* Detail modal: full-screen on mobile */
+      .detail-card {
+        max-width: 100%;
+        width: 96%;
+        max-height: 88vh;
+        padding: 18px 14px;
+        border-radius: 12px;
+      }
+      .detail-date { font-size: 1.3rem; }
+      .detail-match-teams { font-size: 0.95rem; }
+    }
   </style>
 </head>
 <body>
