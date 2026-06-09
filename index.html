@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026年6月 FIFA 賽程桌面月曆</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --cyber-green: #00ff66;
+      --cyber-blue: #00f0ff;
+      --cyber-pink: #ff007f;
+      --cyber-gold: #ffbd00;
+
+      --theme-glow: var(--cyber-green);
+      --bg-gradient: radial-gradient(circle at center, #111e18 0%, #070b09 100%);
+      --card-bg: rgba(13, 27, 21, 0.7);
+      --card-border: rgba(0, 255, 102, 0.18);
+      --text-main: #e2fbe9;
+      --text-muted: #8aa392;
+
+      --font-display: 'Orbitron', 'Noto Sans TC', sans-serif;
+      --font-body: 'Outfit', 'Noto Sans TC', sans-serif;
+      --match-font-size: 10px;
+    }
+
+    .theme-blue  {
+      --theme-glow: var(--cyber-blue);
+      --bg-gradient: radial-gradient(circle at center, #0f1c24 0%, #06090e 100%);
+      --card-bg: rgba(11, 24, 33, 0.7);
+      --card-border: rgba(0, 240, 255, 0.18);
+      --text-main: #e0f7fc;
+      --text-muted: #889fa8;
+    }
+    .theme-pink {
+      --theme-glow: var(--cyber-pink);
+      --bg-gradient: radial-gradient(circle at center, #240f1a 0%, #0e060b 100%);
+      --card-bg: rgba(33, 11, 23, 0.7);
+      --card-border: rgba(255, 0, 127, 0.18);
+      --text-main: #fce0ed;
+      --text-muted: #a88897;
+    }
+    .theme-gold {
+      --theme-glow: var(--cyber-gold);
+      --bg-gradient: radial-gradient(circle at center, #211c0f 0%, #0d0b06 100%);
+      --card-bg: rgba(30, 25, 13, 0.7);
+      --card-border: rgba(255, 189, 0, 0.18);
+      --text-main: #fcf6e0;
+      --text-muted: #a8a088;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Fixed full-screen background layers */
+    .bg-gradient-layer {
+      position: fixed; inset: 0;
+      background: var(--bg-gradient);
+      z-index: -3; pointer-events: none;
+    }
+    .bg-image-layer {
+      position: fixed; inset: 0;
+      background: url('football_bg.png') center/cover no-repeat;
+      opacity: 0.2;
+      z-index: -2; pointer-events: none;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 11px 22px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+    }
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #fff, var(--theme-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .controls {
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .control-group {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.05);
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .control-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+    select, button {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      transition: all 0.25s;
+    }
+    select:hover, button:hover { border-color: var(--theme-glow); }
+    button.btn-primary {
+      background: var(--theme-glow);
+      color: #000; font-weight: 700; border: none; padding: 6px 16px;
+    }
+    button.btn-primary:hover { background: #fff; box-shadow: 0 0 14px var(--theme-glow); }
+    button.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Page container ── */
+    .app-container {
+      flex: 1;
+      padding: 18px 20px 28px;
+      max-width: 1800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Calendar section ── */
+    .calendar-section {
+      position: relative;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden; /* just for the embedded bg */
+      background: var(--bg-gradient);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .calendar-section > .canvas-bg {
+      position: absolute; inset: 0;
+      background: url('football_bg.png') center/cover no-repeat;
+      opacity: 0.25; pointer-events: none; z-index: 0;
+    }
+    .calendar-inner {
+      position: relative; z-index: 1;
+      padding: 20px 24px 22px;
+    }
+
+    /* ── Header bar inside calendar ── */
+    .calendar-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+    .calendar-title-group h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #fff;
+      line-height: 1;
+    }
+    .calendar-title-group p {
+      font-size: clamp(0.55rem, 0.85vw, 0.82rem);
+      color: var(--theme-glow);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    .calendar-stats {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.03);
+      padding: 5px 11px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* ── Calendar Grid ──
+       May 31 + June 1-30 + July 1-4 = 35 cells = 5 rows
+       Cells auto-height so all matches are visible
+    */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      /* No fixed row height → rows grow with tallest cell in each row */
+    }
+
+    .weekday {
+      text-align: center;
+      padding: 6px 0;
+      font-weight: 800;
+      font-size: clamp(0.6rem, 0.75vw, 0.76rem);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--card-border);
+      font-family: var(--font-display);
+    }
+    .weekday.weekend { color: var(--cyber-pink); }
+
+    /* Cells grow to show ALL their matches */
+    .day-cell {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 7px 7px 6px;
+      display: flex;
+      flex-direction: column;
+      min-height: 72px;
+      transition: border-color 0.22s, box-shadow 0.22s, transform 0.22s;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      cursor: default;
+    }
+    .day-cell.has-matches { cursor: pointer; }
+    .day-cell.has-matches:hover {
+      border-color: var(--theme-glow);
+      box-shadow: 0 0 14px rgba(0,255,102,0.18);
+      transform: translateY(-2px);
+      z-index: 2;
+    }
+    .day-cell.other-month {
+      opacity: 0.2;
+      background: rgba(0,0,0,0.3);
+      border-color: rgba(255,255,255,0.04);
+      cursor: default;
+    }
+    .day-cell.today {
+      border: 2px solid var(--theme-glow);
+      box-shadow: inset 0 0 10px rgba(0,255,102,0.12), 0 0 14px rgba(0,255,102,0.22);
+    }
+
+    .day-number {
+      font-family: var(--font-display);
+      font-size: clamp(0.8rem, 1.1vw, 1.1rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .day-cell.weekend .day-number { color: rgba(255,0,127,0.88); }
+    .day-cell.today .day-number {
+      color: var(--theme-glow);
+      text-shadow: 0 0 8px var(--theme-glow);
+    }
+
+    .match-count-badge {
+      font-size: 0.58rem;
+      background: var(--theme-glow);
+      color: #000;
+      min-width: 15px; height: 15px;
+      border-radius: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      padding: 0 3px;
+      box-shadow: 0 0 6px var(--theme-glow);
+    }
+
+    /* Match list: NO overflow hidden — show all matches */
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .match-item {
+      background: rgba(255,255,255,0.03);
+      border-left: 2px solid var(--theme-glow);
+      padding: 2px 5px 3px;
+      border-radius: 0 4px 4px 0;
+      font-size: var(--match-font-size);
+      flex-shrink: 0;
+      transition: background 0.18s;
+    }
+    .has-matches .match-item:hover { background: rgba(255,255,255,0.07); }
+    .match-item.highlighted {
+      background: rgba(0,255,102,0.13) !important;
+      border-left-width: 3px;
+    }
+
+    .match-time-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88em;
+      color: var(--text-muted);
+      font-family: var(--font-display);
+    }
+    .match-group-badge {
+      font-weight: 800;
+      font-size: 0.8em;
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    .match-teams {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+      color: #fff;
+    }
+    .match-teams .vs {
+      color: var(--theme-glow);
+      font-size: 0.85em;
+      font-weight: 400;
+      margin: 0 2px;
+    }
+
+    /* Watermark shown in the section */
+    .wallpaper-watermark {
+      text-align: right;
+      font-family: var(--font-display);
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      opacity: 0.45;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+
+    /* ── Detail Overlay ── */
+    .detail-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      z-index: 100;
+      display: none;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+    .detail-card {
+      background: #0f1c14;
+      border: 2px solid var(--theme-glow);
+      border-radius: 16px;
+      padding: 26px;
+      max-width: 460px; width: 90%;
+      max-height: 82vh; overflow-y: auto;
+      box-shadow: 0 0 30px rgba(0,255,102,0.28);
+      position: relative;
+    }
+    .detail-close {
+      position: absolute; top: 12px; right: 14px;
+      background: transparent; border: none;
+      font-size: 1.4rem; color: var(--text-muted); cursor: pointer;
+    }
+    .detail-close:hover { color: #fff; }
+    .detail-date { font-family: var(--font-display); font-size: 1.6rem; color: #fff; margin-bottom: 4px; }
+    .detail-weekday {
+      color: var(--theme-glow); text-transform: uppercase;
+      font-weight: 700; letter-spacing: 2px; margin-bottom: 16px; font-size: 0.82rem;
+    }
+    .detail-match-list { display: flex; flex-direction: column; gap: 10px; }
+    .detail-match-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-left: 4px solid;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .detail-match-meta { display: flex; justify-content: space-between; font-size: 0.76rem; color: var(--text-muted); }
+    .detail-match-teams { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    @media (max-width: 1100px) {
+      .calendar-grid { gap: 4px; }
+      .day-cell { padding: 5px 5px 4px; }
+      :root { --match-font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-gradient-layer"></div>
+  <div class="bg-image-layer"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-title">FIFA 2026.06 CALENDAR</div>
+    <div class="controls">
+      <div class="control-group">
+        <span class="control-label">篩選分組</span>
+        <select id="groupFilter" onchange="filterMatches()">
+          <option value="ALL">全部組別</option>
+          <option value="A">A組</option><option value="B">B組</option>
+          <option value="C">C組</option><option value="D">D組</option>
+          <option value="E">E組</option><option value="F">F組</option>
+          <option value="G">G組</option><option value="H">H組</option>
+          <option value="I">I組</option><option value="J">J組</option>
+          <option value="K">K組</option><option value="L">L組</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">主題配色</span>
+        <select id="themeSelector" onchange="changeTheme(this.value)">
+          <option value="default">極光綠</option>
+          <option value="blue">霓虹藍</option>
+          <option value="pink">龐克粉</option>
+          <option value="gold">烈焰金</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">文字大小</span>
+        <select id="fontSizeSelector" onchange="changeFontSize(this.value)">
+          <option value="8px">極小</option>
+          <option value="9px">小</option>
+          <option value="10px" selected>適中</option>
+          <option value="11px">大</option>
+        </select>
+      </div>
+          </div>
+  </header>
+
+  <!-- Calendar -->
+  <div class="app-container">
+    <div class="calendar-section">
+      <div class="canvas-bg"></div>
+      <div class="calendar-inner">
+        <div class="calendar-header-bar">
+          <div class="calendar-title-group">
+            <h2>JUNE 2026</h2>
+            <p>FIFA WORLD CUP MATCH SCHEDULE</p>
+          </div>
+          <div class="calendar-stats" id="matchStats">共計 72 場賽事</div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="wallpaper-watermark">FIFA World Cup 2026 — June Schedule Calendar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="detail-overlay" id="detailOverlay" onclick="closeDetail()">
+    <div class="detail-card" onclick="event.stopPropagation()">
+      <button class="detail-close" onclick="closeDetail()">&times;</button>
+      <div class="detail-date" id="detailDateText"></div>
+      <div class="detail-weekday" id="detailWeekdayText"></div>
+      <div class="detail-match-list" id="detailMatchList"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ── Data ── */
+    const flags = {
+      '墨西哥':'🇲🇽','南非':'🇿🇦','南韓':'🇰🇷','捷克':'🇨🇿',
+      '加拿大':'🇨🇦','波赫':'🇧🇦','美國':'🇺🇸','巴拉圭':'🇵🇾',
+      '海地':'🇭🇹','蘇格蘭':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','澳洲':'🇦🇺','土耳其':'🇹🇷',
+      '巴西':'🇧🇷','摩洛哥':'🇲🇦','卡達':'🇶🇦','瑞士':'🇨🇭',
+      '象牙海岸':'🇨🇮','厄瓜多':'🇪🇨','德國':'🇩🇪','庫拉索':'🇨🇼',
+      '荷蘭':'🇳🇱','日本':'🇯🇵','瑞典':'🇸🇪','突尼西亞':'🇹🇳',
+      '沙烏地阿拉伯':'🇸🇦','烏拉圭':'🇺🇾','西班牙':'🇪🇸','維德角':'🇨🇻',
+      '伊朗':'🇮🇷','紐西蘭':'🇳🇿','比利時':'🇧🇪','埃及':'🇪🇬',
+      '法國':'🇫🇷','塞內加爾':'🇸🇳','伊拉克':'🇮🇶','挪威':'🇳🇴',
+      '阿根廷':'🇦🇷','阿爾及利亞':'🇩🇿','奧地利':'🇦🇹','約旦':'🇯🇴',
+      '迦納':'🇬🇭','巴拿馬':'🇵🇦','英格蘭':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','克羅埃西亞':'🇭🇷',
+      '葡萄牙':'🇵🇹','剛果民主共和國':'🇨🇩','烏茲別克':'🇺🇿','哥倫比亞':'🇨🇴'
+    };
+
+    const groupColors = {
+      A:'#00f0ff', B:'#ff007f', C:'#ffbd00', D:'#00ff66',
+      E:'#a124ff', F:'#ff6000', G:'#0084ff', H:'#ff0055',
+      I:'#00ffd2', J:'#bfff00', K:'#00a8ff', L:'#dcb4ff'
+    };
+
+    const matchesData = [
+      {date:12,group:'A',team1:'墨西哥',team2:'南非',time:'凌晨 03:00'},
+      {date:12,group:'A',team1:'南韓',team2:'捷克',time:'上午 10:00'},
+      {date:13,group:'B',team1:'加拿大',team2:'波赫',time:'凌晨 03:00'},
+      {date:13,group:'D',team1:'美國',team2:'巴拉圭',time:'上午 09:00'},
+      {date:14,group:'C',team1:'巴西',team2:'摩洛哥',time:'上午 06:00'},
+      {date:14,group:'C',team1:'海地',team2:'蘇格蘭',time:'上午 09:00'},
+      {date:14,group:'D',team1:'澳洲',team2:'土耳其',time:'中午 12:00'},
+      {date:14,group:'B',team1:'卡達',team2:'瑞士',time:'凌晨 03:00'},
+      {date:15,group:'E',team1:'德國',team2:'庫拉索',time:'凌晨 01:00'},
+      {date:15,group:'F',team1:'荷蘭',team2:'日本',time:'凌晨 04:00'},
+      {date:15,group:'E',team1:'象牙海岸',team2:'厄瓜多',time:'上午 07:00'},
+      {date:15,group:'F',team1:'瑞典',team2:'突尼西亞',time:'上午 10:00'},
+      {date:16,group:'H',team1:'西班牙',team2:'維德角',time:'凌晨 00:00'},
+      {date:16,group:'G',team1:'比利時',team2:'埃及',time:'凌晨 03:00'},
+      {date:16,group:'H',team1:'沙烏地阿拉伯',team2:'烏拉圭',time:'上午 06:00'},
+      {date:16,group:'G',team1:'伊朗',team2:'紐西蘭',time:'上午 09:00'},
+      {date:17,group:'I',team1:'法國',team2:'塞內加爾',time:'凌晨 03:00'},
+      {date:17,group:'I',team1:'伊拉克',team2:'挪威',time:'上午 06:00'},
+      {date:17,group:'J',team1:'阿根廷',team2:'阿爾及利亞',time:'上午 09:00'},
+      {date:17,group:'J',team1:'奧地利',team2:'約旦',time:'中午 12:00'},
+      {date:18,group:'K',team1:'葡萄牙',team2:'剛果民主共和國',time:'凌晨 01:00'},
+      {date:18,group:'L',team1:'英格蘭',team2:'克羅埃西亞',time:'凌晨 04:00'},
+      {date:18,group:'L',team1:'迦納',team2:'巴拿馬',time:'上午 07:00'},
+      {date:18,group:'K',team1:'烏茲別克',team2:'哥倫比亞',time:'上午 10:00'},
+      {date:19,group:'A',team1:'捷克',team2:'南非',time:'凌晨 00:00'},
+      {date:19,group:'B',team1:'瑞士',team2:'波赫',time:'凌晨 03:00'},
+      {date:19,group:'B',team1:'加拿大',team2:'卡達',time:'上午 06:00'},
+      {date:19,group:'A',team1:'墨西哥',team2:'南韓',time:'上午 09:00'},
+      {date:20,group:'D',team1:'美國',team2:'澳洲',time:'凌晨 03:00'},
+      {date:20,group:'C',team1:'蘇格蘭',team2:'摩洛哥',time:'上午 06:00'},
+      {date:20,group:'C',team1:'巴西',team2:'海地',time:'上午 09:00'},
+      {date:20,group:'D',team1:'土耳其',team2:'巴拉圭',time:'中午 12:00'},
+      {date:21,group:'F',team1:'荷蘭',team2:'瑞典',time:'凌晨 01:00'},
+      {date:21,group:'E',team1:'德國',team2:'象牙海岸',time:'凌晨 04:00'},
+      {date:21,group:'E',team1:'厄瓜多',team2:'庫拉索',time:'上午 08:00'},
+      {date:21,group:'F',team1:'突尼西亞',team2:'日本',time:'中午 12:00'},
+      {date:22,group:'H',team1:'西班牙',team2:'沙烏地阿拉伯',time:'凌晨 00:00'},
+      {date:22,group:'G',team1:'比利時',team2:'伊朗',time:'凌晨 03:00'},
+      {date:22,group:'H',team1:'烏拉圭',team2:'維德角',time:'上午 06:00'},
+      {date:22,group:'G',team1:'紐西蘭',team2:'埃及',time:'上午 09:00'},
+      {date:23,group:'J',team1:'阿根廷',team2:'奧地利',time:'凌晨 01:00'},
+      {date:23,group:'I',team1:'法國',team2:'伊拉克',time:'凌晨 05:00'},
+      {date:23,group:'I',team1:'挪威',team2:'塞內加爾',time:'上午 08:00'},
+      {date:23,group:'J',team1:'約旦',team2:'阿爾及利亞',time:'上午 11:00'},
+      {date:24,group:'K',team1:'葡萄牙',team2:'烏茲別克',time:'凌晨 01:00'},
+      {date:24,group:'L',team1:'英格蘭',team2:'迦納',time:'凌晨 04:00'},
+      {date:24,group:'L',team1:'巴拿馬',team2:'克羅埃西亞',time:'上午 07:00'},
+      {date:24,group:'K',team1:'哥倫比亞',team2:'剛果民主共和國',time:'上午 10:00'},
+      {date:25,group:'B',team1:'瑞士',team2:'加拿大',time:'凌晨 03:00'},
+      {date:25,group:'B',team1:'波赫',team2:'卡達',time:'凌晨 03:00'},
+      {date:25,group:'C',team1:'蘇格蘭',team2:'巴西',time:'上午 06:00'},
+      {date:25,group:'C',team1:'摩洛哥',team2:'海地',time:'上午 06:00'},
+      {date:25,group:'A',team1:'捷克',team2:'墨西哥',time:'上午 09:00'},
+      {date:25,group:'A',team1:'南非',team2:'南韓',time:'上午 09:00'},
+      {date:26,group:'E',team1:'庫拉索',team2:'象牙海岸',time:'凌晨 04:00'},
+      {date:26,group:'E',team1:'厄瓜多',team2:'德國',time:'凌晨 04:00'},
+      {date:26,group:'F',team1:'日本',team2:'瑞典',time:'上午 07:00'},
+      {date:26,group:'F',team1:'突尼西亞',team2:'荷蘭',time:'上午 07:00'},
+      {date:26,group:'D',team1:'土耳其',team2:'美國',time:'上午 10:00'},
+      {date:26,group:'D',team1:'巴拉圭',team2:'澳洲',time:'上午 10:00'},
+      {date:27,group:'I',team1:'挪威',team2:'法國',time:'凌晨 03:00'},
+      {date:27,group:'I',team1:'塞內加爾',team2:'伊拉克',time:'凌晨 03:00'},
+      {date:27,group:'H',team1:'維德角',team2:'沙烏地阿拉伯',time:'上午 08:00'},
+      {date:27,group:'H',team1:'烏拉圭',team2:'西班牙',time:'上午 08:00'},
+      {date:27,group:'G',team1:'埃及',team2:'伊朗',time:'上午 11:00'},
+      {date:27,group:'G',team1:'紐西蘭',team2:'比利時',time:'上午 11:00'},
+      {date:28,group:'L',team1:'巴拿馬',team2:'英格蘭',time:'凌晨 05:00'},
+      {date:28,group:'L',team1:'克羅埃西亞',team2:'迦納',time:'凌晨 05:00'},
+      {date:28,group:'K',team1:'哥倫比亞',team2:'葡萄牙',time:'上午 07:30'},
+      {date:28,group:'K',team1:'剛果民主共和國',team2:'烏茲別克',time:'上午 07:30'},
+      {date:28,group:'J',team1:'阿爾及利亞',team2:'奧地利',time:'上午 10:00'},
+      {date:28,group:'J',team1:'約旦',team2:'阿根廷',time:'上午 10:00'}
+    ];
+
+    const currentDayNum = 9; // June 9, 2026
+    const weekdaysCN = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+    /* ── Build interactive calendar ──
+       Grid slots:
+         0..23    = June 7..30
+         24..27   = July 1..4
+       Total = 28 = 4 rows × 7 cols
+    */
+    function initCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      // Weekday header
+      ['週日','週一','週二','週三','週四','週五','週六'].forEach((wd, i) => {
+        const el = document.createElement('div');
+        el.className = 'weekday' + (i === 0 || i === 6 ? ' weekend' : '');
+        el.textContent = wd;
+        grid.appendChild(el);
+      });
+
+      // June 7–30
+      for (let d = 7; d <= 30; d++) {
+        const slot = d - 7; // slot index = 0..23
+        const col = slot % 7; // 1=Mon…6=Sat, 0=Sun
+        const isWE = col === 0 || col === 6;
+        const isToday = d === currentDayNum;
+        const matches = matchesData.filter(m => m.date === d);
+
+        const cell = document.createElement('div');
+        let cls = 'day-cell';
+        if (isWE) cls += ' weekend';
+        if (isToday) cls += ' today';
+        if (matches.length > 0) cls += ' has-matches';
+        cell.className = cls;
+        cell.id = `day-${d}`;
+
+        const badge = matches.length
+          ? `<span class="match-count-badge">${matches.length}</span>` : '';
+
+        let matchHtml = '<div class="match-list">';
+        matches.forEach(m => {
+          const gc = groupColors[m.group] || 'var(--theme-glow)';
+          const f1 = flags[m.team1] || '';
+          const f2 = flags[m.team2] || '';
+          const t = m.time.replace(/^(凌晨|上午|中午|下午) /,'');
+          matchHtml += `<div class="match-item" data-group="${m.group}" style="border-left-color:${gc}">
+            <div class="match-time-group">
+              <span>${t}</span>
+              <span class="match-group-badge" style="background:${gc}22;color:${gc}">${m.group}</span>
+            </div>
+            <div class="match-teams" title="${m.team1} vs ${m.team2}">
+              ${f1}${m.team1}<span class="vs">v</span>${f2}${m.team2}
+            </div>
+          </div>`;
+        });
+        matchHtml += '</div>';
+
+        cell.innerHTML = `<div class="day-number"><span>${d}</span>${badge}</div>${matchHtml}`;
+
+        if (matches.length > 0) {
+          cell.addEventListener('click', () => openDayDetail(d));
+        }
+        grid.appendChild(cell);
+      }
+
+      // July 1–4 (slots 31–34, filler — NO row 6)
+      for (let d = 1; d <= 4; d++) {
+        grid.appendChild(makeOtherCell(String(d)));
+      }
+
+      updateMatchStats();
+    }
+
+    function makeOtherCell(label) {
+      const el = document.createElement('div');
+      el.className = 'day-cell other-month';
+      el.innerHTML = `<div class="day-number"><span>${label}</span></div>`;
+      return el;
+    }
+
+    /* ── Filters ── */
+    function filterMatches() {
+      const g = document.getElementById('groupFilter').value;
+      document.querySelectorAll('.match-item').forEach(item => {
+        const ig = item.getAttribute('data-group');
+        if (g === 'ALL' || ig === g) {
+          item.style.opacity = '1';
+          item.classList.toggle('highlighted', g !== 'ALL');
+        } else {
+          item.style.opacity = '0.12';
+          item.classList.remove('highlighted');
+        }
+      });
+      updateMatchStats(g);
+    }
+
+    function updateMatchStats(g = 'ALL') {
+      const el = document.getElementById('matchStats');
+      el.textContent = g === 'ALL'
+        ? `共計 ${matchesData.length} 場賽事`
+        : `${g}組：共 ${matchesData.filter(m => m.group === g).length} 場賽事`;
+    }
+
+    /* ── Theme / Font ── */
+    function changeTheme(t) {
+      document.body.className = t === 'default' ? '' : `theme-${t}`;
+    }
+    function changeFontSize(s) {
+      document.documentElement.style.setProperty('--match-font-size', s);
+    }
+
+    /* ── Detail modal ── */
+    function openDayDetail(day) {
+      const matches = matchesData.filter(m => m.date === day);
+      if (!matches.length) return;
+      document.getElementById('detailDateText').textContent = `6月${day}日`;
+      document.getElementById('detailWeekdayText').textContent = weekdaysCN[day % 7];
+      const container = document.getElementById('detailMatchList');
+      container.innerHTML = '';
+      matches.forEach(m => {
+        const gc = groupColors[m.group] || 'var(--theme-glow)';
+        const f1 = flags[m.team1] || '', f2 = flags[m.team2] || '';
+        const div = document.createElement('div');
+        div.className = 'detail-match-item';
+        div.style.borderLeftColor = gc;
+        div.innerHTML = `
+          <div class="detail-match-meta">
+            <span style="color:${gc};font-weight:bold">${m.group}組對戰</span>
+            <span>${m.time}</span>
+          </div>
+          <div class="detail-match-teams">
+            <span>${f1} ${m.team1}</span>
+            <span style="color:var(--theme-glow);font-size:0.85em;font-weight:400">vs</span>
+            <span>${f2} ${m.team2}</span>
+          </div>`;
+        container.appendChild(div);
+      });
+      document.getElementById('detailOverlay').style.display = 'flex';
+    }
+    function closeDetail() {
+      document.getElementById('detailOverlay').style.display = 'none';
+    }
+
+    window.onload = initCalendar;
+  </script>
+</body>
+</html>
