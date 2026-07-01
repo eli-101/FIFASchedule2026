@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026年6月 FIFA 賽程桌面月曆</title>
+  <title>2026年7月 FIFA 淘汰賽桌面月曆</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -539,18 +539,18 @@
 
   <!-- Header -->
   <header>
-    <div class="brand-title">FIFA 2026.06 CALENDAR</div>
+    <div class="brand-title">FIFA 2026.07 CALENDAR</div>
     <div class="controls">
       <div class="control-group">
-        <span class="control-label">篩選分組</span>
+        <span class="control-label">篩選輪次</span>
         <select id="groupFilter" onchange="filterMatches()">
-          <option value="ALL">全部組別</option>
-          <option value="A">A組</option><option value="B">B組</option>
-          <option value="C">C組</option><option value="D">D組</option>
-          <option value="E">E組</option><option value="F">F組</option>
-          <option value="G">G組</option><option value="H">H組</option>
-          <option value="I">I組</option><option value="J">J組</option>
-          <option value="K">K組</option><option value="L">L組</option>
+          <option value="ALL">全部輪次</option>
+          <option value="32">32強賽</option>
+          <option value="16">16強賽</option>
+          <option value="8">8強賽</option>
+          <option value="4">4強賽</option>
+          <option value="3RD">季軍賽</option>
+          <option value="FINAL">冠軍賽</option>
         </select>
       </div>
       <div class="control-group">
@@ -581,13 +581,13 @@
       <div class="calendar-inner">
         <div class="calendar-header-bar">
           <div class="calendar-title-group">
-            <h2>JUNE 2026</h2>
-            <p>FIFA WORLD CUP MATCH SCHEDULE</p>
+            <h2>JULY 2026</h2>
+            <p>FIFA WORLD CUP KNOCKOUT STAGE</p>
           </div>
-          <div class="calendar-stats" id="matchStats">共計 72 場賽事</div>
+          <div class="calendar-stats" id="matchStats">共計 28 場賽事</div>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
-        <div class="wallpaper-watermark">FIFA World Cup 2026 — June Schedule Calendar</div>
+        <div class="wallpaper-watermark">FIFA World Cup 2026 — July Knockout Schedule</div>
       </div>
     </div>
     <!-- Mobile Day Panel -->
@@ -631,94 +631,94 @@
     };
 
     const groupColors = {
-      A:'#00f0ff', B:'#ff007f', C:'#ffbd00', D:'#00ff66',
-      E:'#a124ff', F:'#ff6000', G:'#0084ff', H:'#ff0055',
-      I:'#00ffd2', J:'#bfff00', K:'#00a8ff', L:'#dcb4ff'
+      '32':'#00f0ff', '16':'#ff007f', '8':'#ffbd00',
+      '4':'#00ff66', '3RD':'#a124ff', 'FINAL':'#ff3d3d'
+    };
+
+    /* Full / short display labels for each knockout round code */
+    const roundLabels = {
+      '32':'32強賽', '16':'16強賽', '8':'8強賽', '4':'4強賽',
+      '3RD':'季軍賽', 'FINAL':'冠軍賽'
+    };
+    const roundShort = {
+      '32':'32强', '16':'16强', '8':'8强', '4':'4强',
+      '3RD':'季軍', 'FINAL':'冠軍'
     };
 
     const matchesData = [
-      {date:12,group:'A',team1:'墨西哥',team2:'南非',time:'凌晨 03:00'},
-      {date:12,group:'A',team1:'南韓',team2:'捷克',time:'上午 10:00'},
-      {date:13,group:'B',team1:'加拿大',team2:'波赫',time:'凌晨 03:00'},
-      {date:13,group:'D',team1:'美國',team2:'巴拉圭',time:'上午 09:00'},
-      {date:14,group:'C',team1:'巴西',team2:'摩洛哥',time:'上午 06:00'},
-      {date:14,group:'C',team1:'海地',team2:'蘇格蘭',time:'上午 09:00'},
-      {date:14,group:'D',team1:'澳洲',team2:'土耳其',time:'中午 12:00'},
-      {date:14,group:'B',team1:'卡達',team2:'瑞士',time:'凌晨 03:00'},
-      {date:15,group:'E',team1:'德國',team2:'庫拉索',time:'凌晨 01:00'},
-      {date:15,group:'F',team1:'荷蘭',team2:'日本',time:'凌晨 04:00'},
-      {date:15,group:'E',team1:'象牙海岸',team2:'厄瓜多',time:'上午 07:00'},
-      {date:15,group:'F',team1:'瑞典',team2:'突尼西亞',time:'上午 10:00'},
-      {date:16,group:'H',team1:'西班牙',team2:'維德角',time:'凌晨 00:00'},
-      {date:16,group:'G',team1:'比利時',team2:'埃及',time:'凌晨 03:00'},
-      {date:16,group:'H',team1:'沙烏地阿拉伯',team2:'烏拉圭',time:'上午 06:00'},
-      {date:16,group:'G',team1:'伊朗',team2:'紐西蘭',time:'上午 09:00'},
-      {date:17,group:'I',team1:'法國',team2:'塞內加爾',time:'凌晨 03:00'},
-      {date:17,group:'I',team1:'伊拉克',team2:'挪威',time:'上午 06:00'},
-      {date:17,group:'J',team1:'阿根廷',team2:'阿爾及利亞',time:'上午 09:00'},
-      {date:17,group:'J',team1:'奧地利',team2:'約旦',time:'中午 12:00'},
-      {date:18,group:'K',team1:'葡萄牙',team2:'剛果民主共和國',time:'凌晨 01:00'},
-      {date:18,group:'L',team1:'英格蘭',team2:'克羅埃西亞',time:'凌晨 04:00'},
-      {date:18,group:'L',team1:'迦納',team2:'巴拿馬',time:'上午 07:00'},
-      {date:18,group:'K',team1:'烏茲別克',team2:'哥倫比亞',time:'上午 10:00'},
-      {date:19,group:'A',team1:'捷克',team2:'南非',time:'凌晨 00:00'},
-      {date:19,group:'B',team1:'瑞士',team2:'波赫',time:'凌晨 03:00'},
-      {date:19,group:'B',team1:'加拿大',team2:'卡達',time:'上午 06:00'},
-      {date:19,group:'A',team1:'墨西哥',team2:'南韓',time:'上午 09:00'},
-      {date:20,group:'D',team1:'美國',team2:'澳洲',time:'凌晨 03:00'},
-      {date:20,group:'C',team1:'蘇格蘭',team2:'摩洛哥',time:'上午 06:00'},
-      {date:20,group:'C',team1:'巴西',team2:'海地',time:'上午 09:00'},
-      {date:20,group:'D',team1:'土耳其',team2:'巴拉圭',time:'中午 12:00'},
-      {date:21,group:'F',team1:'荷蘭',team2:'瑞典',time:'凌晨 01:00'},
-      {date:21,group:'E',team1:'德國',team2:'象牙海岸',time:'凌晨 04:00'},
-      {date:21,group:'E',team1:'厄瓜多',team2:'庫拉索',time:'上午 08:00'},
-      {date:21,group:'F',team1:'突尼西亞',team2:'日本',time:'中午 12:00'},
-      {date:22,group:'H',team1:'西班牙',team2:'沙烏地阿拉伯',time:'凌晨 00:00'},
-      {date:22,group:'G',team1:'比利時',team2:'伊朗',time:'凌晨 03:00'},
-      {date:22,group:'H',team1:'烏拉圭',team2:'維德角',time:'上午 06:00'},
-      {date:22,group:'G',team1:'紐西蘭',team2:'埃及',time:'上午 09:00'},
-      {date:23,group:'J',team1:'阿根廷',team2:'奧地利',time:'凌晨 01:00'},
-      {date:23,group:'I',team1:'法國',team2:'伊拉克',time:'凌晨 05:00'},
-      {date:23,group:'I',team1:'挪威',team2:'塞內加爾',time:'上午 08:00'},
-      {date:23,group:'J',team1:'約旦',team2:'阿爾及利亞',time:'上午 11:00'},
-      {date:24,group:'K',team1:'葡萄牙',team2:'烏茲別克',time:'凌晨 01:00'},
-      {date:24,group:'L',team1:'英格蘭',team2:'迦納',time:'凌晨 04:00'},
-      {date:24,group:'L',team1:'巴拿馬',team2:'克羅埃西亞',time:'上午 07:00'},
-      {date:24,group:'K',team1:'哥倫比亞',team2:'剛果民主共和國',time:'上午 10:00'},
-      {date:25,group:'B',team1:'瑞士',team2:'加拿大',time:'凌晨 03:00'},
-      {date:25,group:'B',team1:'波赫',team2:'卡達',time:'凌晨 03:00'},
-      {date:25,group:'C',team1:'蘇格蘭',team2:'巴西',time:'上午 06:00'},
-      {date:25,group:'C',team1:'摩洛哥',team2:'海地',time:'上午 06:00'},
-      {date:25,group:'A',team1:'捷克',team2:'墨西哥',time:'上午 09:00'},
-      {date:25,group:'A',team1:'南非',team2:'南韓',time:'上午 09:00'},
-      {date:26,group:'E',team1:'庫拉索',team2:'象牙海岸',time:'凌晨 04:00'},
-      {date:26,group:'E',team1:'厄瓜多',team2:'德國',time:'凌晨 04:00'},
-      {date:26,group:'F',team1:'日本',team2:'瑞典',time:'上午 07:00'},
-      {date:26,group:'F',team1:'突尼西亞',team2:'荷蘭',time:'上午 07:00'},
-      {date:26,group:'D',team1:'土耳其',team2:'美國',time:'上午 10:00'},
-      {date:26,group:'D',team1:'巴拉圭',team2:'澳洲',time:'上午 10:00'},
-      {date:27,group:'I',team1:'挪威',team2:'法國',time:'凌晨 03:00'},
-      {date:27,group:'I',team1:'塞內加爾',team2:'伊拉克',time:'凌晨 03:00'},
-      {date:27,group:'H',team1:'維德角',team2:'沙烏地阿拉伯',time:'上午 08:00'},
-      {date:27,group:'H',team1:'烏拉圭',team2:'西班牙',time:'上午 08:00'},
-      {date:27,group:'G',team1:'埃及',team2:'伊朗',time:'上午 11:00'},
-      {date:27,group:'G',team1:'紐西蘭',team2:'比利時',time:'上午 11:00'},
-      {date:28,group:'L',team1:'巴拿馬',team2:'英格蘭',time:'凌晨 05:00'},
-      {date:28,group:'L',team1:'克羅埃西亞',team2:'迦納',time:'凌晨 05:00'},
-      {date:28,group:'K',team1:'哥倫比亞',team2:'葡萄牙',time:'上午 07:30'},
-      {date:28,group:'K',team1:'剛果民主共和國',team2:'烏茲別克',time:'上午 07:30'},
-      {date:28,group:'J',team1:'阿爾及利亞',team2:'奧地利',time:'上午 10:00'},
-      {date:28,group:'J',team1:'約旦',team2:'阿根廷',time:'上午 10:00'}
+      /* ── 32強賽（Round of 32）── 時間已換算為台灣時間 ── */
+      {date:1,group:'32',team1:'象牙海岸',team2:'挪威',time:'凌晨 01:00'},
+      {date:1,group:'32',team1:'法國',team2:'瑞典',time:'凌晨 05:00'},
+      {date:1,group:'32',team1:'墨西哥',team2:'厄瓜多',time:'上午 11:00'},
+      {date:2,group:'32',team1:'英格蘭',team2:'剛果民主共和國',time:'凌晨 00:00'},
+      {date:2,group:'32',team1:'比利時',team2:'塞內加爾',time:'凌晨 04:00'},
+      {date:2,group:'32',team1:'美國',team2:'波赫',time:'上午 08:00'},
+      {date:3,group:'32',team1:'西班牙',team2:'奧地利',time:'凌晨 03:00'},
+      {date:3,group:'32',team1:'葡萄牙',team2:'克羅埃西亞',time:'上午 07:00'},
+      {date:3,group:'32',team1:'瑞士',team2:'阿爾及利亞',time:'上午 11:00'},
+      {date:4,group:'32',team1:'澳洲',team2:'埃及',time:'凌晨 02:00'},
+      {date:4,group:'32',team1:'阿根廷',team2:'維德角',time:'上午 06:00'},
+      {date:4,group:'32',team1:'哥倫比亞',team2:'迦納',time:'上午 09:30'},
+
+      /* ── 16強賽（Round of 16）── */
+      {date:5,group:'16',team1:'加拿大',team2:'摩洛哥',time:'凌晨 01:00'},
+      {date:5,group:'16',team1:'巴拉圭',team2:'法國',time:'凌晨 05:00'},
+      {date:6,group:'16',team1:'巴西',team2:'挪威',time:'凌晨 04:00'},
+      {date:6,group:'16',team1:'墨西哥',team2:'M80勝隊',time:'上午 08:00'},
+      {date:7,group:'16',team1:'M83勝隊',team2:'M84勝隊',time:'凌晨 03:00'},
+      {date:7,group:'16',team1:'M81勝隊',team2:'M82勝隊',time:'上午 08:00'},
+      {date:8,group:'16',team1:'M86勝隊',team2:'M88勝隊',time:'凌晨 00:00'},
+      {date:8,group:'16',team1:'M85勝隊',team2:'M87勝隊',time:'凌晨 04:00'},
+
+      /* ── 8強賽（Quarter-finals）── */
+      {date:10,group:'8',team1:'M89勝隊',team2:'M90勝隊',time:'凌晨 04:00'},
+      {date:11,group:'8',team1:'M93勝隊',team2:'M94勝隊',time:'凌晨 03:00'},
+      {date:12,group:'8',team1:'M91勝隊',team2:'M92勝隊',time:'凌晨 05:00'},
+      {date:12,group:'8',team1:'M95勝隊',team2:'M96勝隊',time:'上午 09:00'},
+
+      /* ── 4強賽（Semi-finals）── */
+      {date:15,group:'4',team1:'M97勝隊',team2:'M98勝隊',time:'凌晨 03:00'},
+      {date:16,group:'4',team1:'M99勝隊',team2:'M100勝隊',time:'凌晨 03:00'},
+
+      /* ── 季軍賽 & 冠軍賽 ── */
+      {date:19,group:'3RD',team1:'M101敗隊',team2:'M102敗隊',time:'凌晨 05:00'},
+      {date:20,group:'FINAL',team1:'M101勝隊',team2:'M102勝隊',time:'凌晨 03:00'}
     ];
+    // ↑ 以上是「內建備用賽程」。如果下面抓取 GitHub 上的即時資料失敗
+    //   (例如離線、還沒部署好 cron job),就會顯示這份内建的資料,不會整頁壞掉。
+
+    /* ── 即時賽程來源 ──
+       Railway 上的 Cron Job 每天會重新抓維基百科並把結果寫進這個 GitHub repo,
+       這裡直接讀取該檔案的 raw 版本。部署好之後,請把下面網址換成你自己的:
+         https://raw.githubusercontent.com/{你的帳號}/{repo}/{branch}/matches.json
+    */
+    const MATCHES_JSON_URL = 'https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/matches.json';
+
+    async function fetchLiveMatches() {
+      try {
+        const res = await fetch(MATCHES_JSON_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) throw new Error('空資料');
+        matchesData.length = 0;
+        matchesData.push(...data);
+        console.log(`[FIFA calendar] 已載入即時賽程,共 ${data.length} 場比賽`);
+        return true;
+      } catch (err) {
+        console.warn('[FIFA calendar] 無法載入即時賽程,改用內建備用資料：', err);
+        return false;
+      }
+    }
 
     const currentDayNum = new Date().getDate(); // dynamic today
     const weekdaysCN = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
 
     /* ── Build interactive calendar ──
-       Grid slots:
-         0..23    = June 7..30
-         24..27   = July 1..4
-       Total = 28 = 4 rows × 7 cols
+       July 1, 2026 falls on a Wednesday, so the grid needs:
+         3 leading filler cells  = June 28–30
+         31 main cells           = July 1–31
+         1 trailing filler cell  = Aug 1
+       Total = 35 = 5 rows × 7 cols
     */
     function initCalendar() {
       const grid = document.getElementById('calendarGrid');
@@ -732,10 +732,12 @@
         grid.appendChild(el);
       });
 
-      // June 7–30
-      for (let d = 7; d <= 30; d++) {
-        const slot = d - 7; // slot index = 0..23
-        const col = slot % 7; // 1=Mon…6=Sat, 0=Sun
+      // Leading filler: June 28–30 (July 1 is a Wednesday, col index 3)
+      [28, 29, 30].forEach(d => grid.appendChild(makeOtherCell(String(d))));
+
+      // July 1–31
+      for (let d = 1; d <= 31; d++) {
+        const col = new Date(2026, 6, d).getDay(); // 0=Sun…6=Sat (month 6 = July)
         const isWE = col === 0 || col === 6;
         const isToday = d === currentDayNum;
         const matches = matchesData.filter(m => m.date === d);
@@ -763,7 +765,7 @@
           matchHtml += `<div class="match-item${isArgMatch ? ' argentina-match' : ''}" data-group="${m.group}" style="border-left-color:${gc}">
             <div class="match-time-group">
               <span>${t}</span>
-              <span class="match-group-badge" style="background:${gc}22;color:${gc}">${m.group}${isArgMatch ? ' ⭐' : ''}</span>
+              <span class="match-group-badge" style="background:${gc}22;color:${gc}">${roundShort[m.group] || m.group}${isArgMatch ? ' ⭐' : ''}</span>
             </div>
             <div class="match-teams" title="${m.team1} vs ${m.team2}">
               ${f1}${m.team1}<span class="vs">v</span>${f2}${m.team2}
@@ -781,10 +783,8 @@
         grid.appendChild(cell);
       }
 
-      // July 1–4 (slots 31–34, filler — NO row 6)
-      for (let d = 1; d <= 4; d++) {
-        grid.appendChild(makeOtherCell(String(d)));
-      }
+      // Trailing filler: Aug 1
+      grid.appendChild(makeOtherCell('1'));
 
       updateMatchStats();
     }
@@ -828,7 +828,7 @@
       const el = document.getElementById('matchStats');
       el.textContent = g === 'ALL'
         ? `共計 ${matchesData.length} 場賽事`
-        : `${g}組：共 ${matchesData.filter(m => m.group === g).length} 場賽事`;
+        : `${roundLabels[g] || g}：共 ${matchesData.filter(m => m.group === g).length} 場賽事`;
     }
 
     /* ── Theme / Font ── */
@@ -851,7 +851,7 @@
         div.style.borderLeftColor = gc;
         div.innerHTML = `
           <div class="detail-match-meta">
-            <span style="color:${gc};font-weight:bold">${m.group}組對戰${isArg ? ' ⭐' : ''}</span>
+            <span style="color:${gc};font-weight:bold">${roundLabels[m.group] || m.group}${isArg ? ' ⭐' : ''}</span>
             <span>${m.time}</span>
           </div>
           <div class="detail-match-teams">
@@ -869,6 +869,7 @@
     function openDayDetail(day) {
       const matches = matchesData.filter(m => m.date === day);
       if (!matches.length) return;
+      const weekday = weekdaysCN[new Date(2026, 6, day).getDay()]; // month 6 = July
 
       if (window.innerWidth <= 640) {
         // Mobile: show panel below calendar
@@ -880,16 +881,16 @@
         selectedDay = day;
         document.getElementById(`day-${day}`).classList.add('day-selected');
 
-        document.getElementById('mobilePanelDate').textContent = `6月${day}日`;
-        document.getElementById('mobilePanelWeekday').textContent = weekdaysCN[day % 7];
+        document.getElementById('mobilePanelDate').textContent = `7月${day}日`;
+        document.getElementById('mobilePanelWeekday').textContent = weekday;
         buildMatchItems(matches, document.getElementById('mobilePanelMatches'));
         const panel = document.getElementById('mobileDayPanel');
         panel.classList.add('active');
         setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
       } else {
         // Desktop: modal overlay
-        document.getElementById('detailDateText').textContent = `6月${day}日`;
-        document.getElementById('detailWeekdayText').textContent = weekdaysCN[day % 7];
+        document.getElementById('detailDateText').textContent = `7月${day}日`;
+        document.getElementById('detailWeekdayText').textContent = weekday;
         buildMatchItems(matches, document.getElementById('detailMatchList'));
         document.getElementById('detailOverlay').style.display = 'flex';
       }
@@ -908,7 +909,10 @@
       }
     }
 
-    window.onload = initCalendar;
+    window.onload = async () => {
+      await fetchLiveMatches(); // 失敗也沒關係,fetchLiveMatches 內部已處理好備用資料
+      initCalendar();
+    };
   </script>
 </body>
 </html>
