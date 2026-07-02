@@ -73,17 +73,58 @@ def fetch_wikitext(title: str) -> str:
     return page["revisions"][0]["slots"]["main"]["*"]
 
 
+def fetch_match_section_indices(title: str):
+    """回傳頁面裡所有『對戰』小節的 section index（標題含 " vs " 的那些）。"""
+    params = {"action": "parse", "page": title, "prop": "sections", "format": "json"}
+    r = requests.get(WIKI_API, params=params, headers=UA, timeout=20)
+    r.raise_for_status()
+    sections = r.json()["parse"]["sections"]
+    return [s["index"] for s in sections if " vs " in s["line"]]
+
+
+def fetch_wikitext_section(title: str, section_index) -> str:
+    params = {
+        "action": "query", "prop": "revisions", "rvprop": "content",
+        "rvslots": "main", "rvsection": section_index, "format": "json",
+        "titles": title,
+    }
+    r = requests.get(WIKI_API, params=params, headers=UA, timeout=20)
+    r.raise_for_status()
+    page = next(iter(r.json()["query"]["pages"].values()))
+    if "revisions" not in page:
+        return ""
+    return page["revisions"][0]["slots"]["main"]["*"]
+
+
+def fetch_wikitext_by_sections(title: str) -> str:
+    """逐一抓取頁面中每個『對戰』小節後合併。
+    用於像 round of 32 這種整頁太大、一次抓取會逾時或被截斷的頁面：
+    每個小節只有幾 KB，分開抓既快又穩定。"""
+    indices = fetch_match_section_indices(title)
+    parts = []
+    for idx in indices:
+        try:
+            parts.append(fetch_wikitext_section(title, idx))
+        except Exception as e:
+            print(f"[警告] 抓取「{title}」第 {idx} 小節失敗：{e}")
+    return "\n----\n".join(parts)
+
+
 def strip_comments(s: str) -> str:
     return re.sub(r"<!--.*?-->", "", s, flags=re.S)
 
 
 def find_football_box_blocks(wikitext: str):
-    marker = "{{#invoke:football box|main"
+    """掃描 wikitext，找出所有 {{#invoke:football box|main ... }} 樣板區塊
+    （不分大小寫比對，因為不同頁面的編輯者有時會寫成 "Football box"），
+    用括號深度計數來正確處理巢狀的 {{ }}。"""
+    pattern = re.compile(r"\{\{#invoke:football box\|main", re.IGNORECASE)
     blocks, idx = [], 0
     while True:
-        start = wikitext.find(marker, idx)
-        if start == -1:
+        m = pattern.search(wikitext, idx)
+        if not m:
             break
+        start = m.start()
         depth, i, n = 0, start, len(wikitext)
         while i < n:
             if wikitext[i:i + 2] == "{{":
@@ -103,8 +144,11 @@ def find_football_box_blocks(wikitext: str):
 
 
 def split_template_params(block: str):
-    prefix = "{{#invoke:football box|main"
-    inner = block[len(prefix):-2]
+    # 開頭的 "{{#invoke:football box|main" 長度固定，不分大小寫都一樣長，
+    # 用不分大小寫的比對找出真正的前綴長度即可安全去除。
+    prefix_match = re.match(r"\{\{#invoke:football box\|main", block, re.IGNORECASE)
+    prefix_len = prefix_match.end() if prefix_match else len("{{#invoke:football box|main")
+    inner = block[prefix_len:-2]
     params, current = [], ""
     brace_depth, bracket_depth = 0, 0
     i, n = 0, len(inner)
@@ -235,15 +279,27 @@ def parse_page(wikitext: str):
 
 
 def scrape_all():
+    # 每個頁面標一個抓取策略：
+    #   "whole"    = 一次抓整頁（適合較小的頁面）
+    #   "sections" = 逐一小節抓取後合併（適合 round of 32 這種超大頁面，
+    #                整頁一次抓會逾時或被截斷）
     pages = [
-        "2026 FIFA World Cup round of 32",
-        "2026 FIFA World Cup knockout stage",
-        "2026 FIFA World Cup final",
+        ("2026 FIFA World Cup round of 32", "sections"),
+        ("2026 FIFA World Cup knockout stage", "whole"),
+        ("2026 FIFA World Cup final", "whole"),
     ]
     all_matches, seen = [], set()
-    for title in pages:
+    for title, strategy in pages:
         try:
-            wikitext = fetch_wikitext(title)
+            if strategy == "sections":
+                wikitext = fetch_wikitext_by_sections(title)
+            else:
+                wikitext = fetch_wikitext(title)
+                # 保險：如果整頁抓到卻找不到任何 football box，
+                # 可能是頁面太大被截斷，改用小節方式再試一次。
+                if not find_football_box_blocks(wikitext):
+                    print(f"[資訊]「{title}」整頁未找到賽事樣板，改用小節方式重試")
+                    wikitext = fetch_wikitext_by_sections(title)
         except Exception as e:
             print(f"[警告] 抓取「{title}」失敗：{e}")
             continue
