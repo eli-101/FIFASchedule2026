@@ -3,7 +3,7 @@ Vercel Serverless Function：/api/scrape
 
 由 vercel.json 裡設定的 Cron Job 定時呼叫這個路徑（GET 請求）。
 每次執行會：
-  1. 向維基百科抓「32強／16強~季軍賽／冠軍賽」三個頁面的 wikitext
+  1. 向維基百科抓「16強~冠軍賽／32強」頁面的 wikitext
   2. 解析賽事樣板，取出日期/時間/隊伍，換算成台灣時間
   3. 透過 GitHub Contents API 把結果寫回 matches.json
 
@@ -12,13 +12,14 @@ Vercel Serverless Function：/api/scrape
   GITHUB_REPO    - 例如 "eli-101/FIFASchedule2026"
   GITHUB_PATH    - 預設 "matches.json"（可不填）
   GITHUB_BRANCH  - 預設 "main"（可不填）
-  CRON_SECRET    - 選填，設定後可防止別人隨意觸發這個網址（見下方說明）
+  CRON_SECRET    - 選填，設定後可防止別人隨意觸發這個網址
 """
 
 import base64
 import json
 import os
 import re
+import time
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler
 
@@ -98,8 +99,8 @@ def fetch_wikitext_section(title: str, section_index) -> str:
 
 def fetch_wikitext_by_sections(title: str) -> str:
     """逐一抓取頁面中每個『對戰』小節後合併。
-    用於像 round of 32 這種整頁太大、一次抓取會逾時或被截斷的頁面：
-    每個小節只有幾 KB，分開抓既快又穩定。"""
+    這是備援手段：只有在整頁抓取拿不到任何賽事樣板時才會用到。
+    每次請求之間稍微間隔，避免對維基百科發出過多請求而被限流。"""
     indices = fetch_match_section_indices(title)
     parts = []
     for idx in indices:
@@ -107,6 +108,7 @@ def fetch_wikitext_by_sections(title: str) -> str:
             parts.append(fetch_wikitext_section(title, idx))
         except Exception as e:
             print(f"[警告] 抓取「{title}」第 {idx} 小節失敗：{e}")
+        time.sleep(0.3)
     return "\n----\n".join(parts)
 
 
@@ -144,8 +146,6 @@ def find_football_box_blocks(wikitext: str):
 
 
 def split_template_params(block: str):
-    # 開頭的 "{{#invoke:football box|main" 長度固定，不分大小寫都一樣長，
-    # 用不分大小寫的比對找出真正的前綴長度即可安全去除。
     prefix_match = re.match(r"\{\{#invoke:football box\|main", block, re.IGNORECASE)
     prefix_len = prefix_match.end() if prefix_match else len("{{#invoke:football box|main")
     inner = block[prefix_len:-2]
@@ -279,30 +279,31 @@ def parse_page(wikitext: str):
 
 
 def scrape_all():
-    # 每個頁面標一個抓取策略：
-    #   "whole"    = 一次抓整頁（適合較小的頁面）
-    #   "sections" = 逐一小節抓取後合併（適合 round of 32 這種超大頁面，
-    #                整頁一次抓會逾時或被截斷）
+    # 全部頁面都用「整頁抓取」，請求次數最少（3 次），不會觸發維基百科限流。
+    # 順序很重要：先抓資料量最大的「16強~冠軍賽」頁面，確保它一定先拿到；
+    # round of 32 放最後，萬一它需要備援的逐小節抓取（會多發請求），
+    # 也不會影響到前面已經安全收集好的資料。
     pages = [
-        ("2026 FIFA World Cup round of 32", "sections"),
-        ("2026 FIFA World Cup knockout stage", "whole"),
-        ("2026 FIFA World Cup final", "whole"),
+        "2026 FIFA World Cup knockout stage",   # 16強、8強、4強、季軍賽、冠軍賽
+        "2026 FIFA World Cup final",            # 冠軍賽（保險，通常已含在上面）
+        "2026 FIFA World Cup round of 32",      # 32強賽
     ]
     all_matches, seen = [], set()
-    for title, strategy in pages:
+    for title in pages:
+        wikitext = ""
         try:
-            if strategy == "sections":
-                wikitext = fetch_wikitext_by_sections(title)
-            else:
-                wikitext = fetch_wikitext(title)
-                # 保險：如果整頁抓到卻找不到任何 football box，
-                # 可能是頁面太大被截斷，改用小節方式再試一次。
-                if not find_football_box_blocks(wikitext):
-                    print(f"[資訊]「{title}」整頁未找到賽事樣板，改用小節方式重試")
-                    wikitext = fetch_wikitext_by_sections(title)
+            wikitext = fetch_wikitext(title)
         except Exception as e:
-            print(f"[警告] 抓取「{title}」失敗：{e}")
-            continue
+            print(f"[警告] 整頁抓取「{title}」失敗：{e}")
+        # 備援：只有在整頁完全找不到任何賽事樣板時（例如被截斷或內容是轉錄未展開），
+        # 才改用逐小節方式補救。正常情況不會走到這裡，所以平時不會多發請求。
+        if not find_football_box_blocks(wikitext):
+            try:
+                print(f"[資訊]「{title}」整頁未找到賽事樣板，改用逐小節方式補救")
+                wikitext = fetch_wikitext_by_sections(title)
+            except Exception as e:
+                print(f"[警告] 逐小節抓取「{title}」也失敗：{e}")
+                continue
         for m in parse_page(wikitext):
             key = (m["date"], m["team1"], m["team2"], m["time"])
             if key in seen:
@@ -349,8 +350,6 @@ def push_to_github(matches):
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # 如果設定了 CRON_SECRET，就檢查 Vercel Cron 帶來的授權標頭，
-        # 避免任何人只要知道網址就能亂觸發這個端點（會浪費 GitHub API 額度）。
         expected_secret = os.environ.get("CRON_SECRET")
         if expected_secret:
             auth_header = self.headers.get("Authorization", "")
